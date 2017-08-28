@@ -19,7 +19,6 @@ defmodule Membrane.Element.PortAudio.Mixfile do
 
   def application do
     [applications: [
-      :membrane_core
     ], mod: {Membrane.Element.PortAudio, []}]
   end
 
