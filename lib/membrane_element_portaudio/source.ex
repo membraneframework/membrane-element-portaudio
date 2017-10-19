@@ -43,8 +43,14 @@ defmodule Membrane.Element.PortAudio.Source do
 
 
   @doc false
-  def handle_prepare(:playing, state) do
-    {:ok, %{state | native: nil}}
+  def handle_prepare(:playing, %{native: native} = state) do
+    case SourceNative.stop(native) do
+      :ok ->
+        {:ok, state}
+
+      {:error, reason} ->
+        {:error, {:stop, reason}, state}
+    end
   end
 
 
@@ -61,14 +67,8 @@ defmodule Membrane.Element.PortAudio.Source do
 
 
   @doc false
-  def handle_stop(%{native: native} = state) do
-    case SourceNative.stop(native) do
-      :ok ->
-        {:ok, state}
-
-      {:error, reason} ->
-        {:error, {:stop, reason}, state}
-    end
+  def handle_stop(state) do
+    {:ok, %{state | native: nil}}
   end
 
 
