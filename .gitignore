@@ -7,3 +7,4 @@
 *.obj
 *.exp
 *.lib
+bundlex.sh
