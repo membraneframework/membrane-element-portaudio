@@ -20,9 +20,9 @@ static void res_source_handle_destructor(ErlNifEnv *env, void *value) {
   MEMBRANE_DEBUG("Destroying SourceHandle %p", value);
 
   if(Pa_IsStreamStopped(source_handle->stream) == 0) {
-    error = Pa_StopStream(source_handle->stream);
+    error = Pa_AbortStream(source_handle->stream);
     if(error != paNoError) {
-      MEMBRANE_DEBUG("Pa_StopStream: error = %d (%s)", error, Pa_GetErrorText(error));
+      MEMBRANE_DEBUG("Pa_AbortStream: error = %d (%s)", error, Pa_GetErrorText(error));
     }
   }
 
@@ -117,10 +117,10 @@ static ERL_NIF_TERM export_stop(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
 
   // Stop the stream
-  error = Pa_StopStream(source_handle->stream);
+  error = Pa_AbortStream(source_handle->stream);
   if(error != paNoError) {
-    MEMBRANE_DEBUG("Pa_StartStream: error = %d (%s)", error, Pa_GetErrorText(error));
-    return membrane_util_make_error_internal(env, "paclosestream");
+    MEMBRANE_DEBUG("Pa_AbortStream: error = %d (%s)", error, Pa_GetErrorText(error));
+    return membrane_util_make_error_internal(env, "pa_abortstream");
   }
 
 

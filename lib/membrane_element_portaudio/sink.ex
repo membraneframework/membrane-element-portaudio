@@ -43,7 +43,8 @@ defmodule Membrane.Element.PortAudio.Sink do
 
 
   @doc false
-  def handle_prepare(:playing, state) do
+  def handle_prepare(:playing, %{native: native} = state) do
+    SinkNative.stop(native)
     {:ok, %{state | native: nil}}
   end
 

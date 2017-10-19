@@ -11,7 +11,7 @@
 #define SAMPLE_SIZE_BYTES        4
 #define RINGBUFFER_SIZE_ELEMENTS 4096
 
-ErlNifResourceType *RES_SOURCE_HANDLE_TYPE;
+ErlNifResourceType *RES_SINK_HANDLE_TYPE;
 
 
 static void res_sink_handle_destructor(ErlNifEnv *env, void *value) {
@@ -21,9 +21,9 @@ static void res_sink_handle_destructor(ErlNifEnv *env, void *value) {
   MEMBRANE_DEBUG("Destroying SinkHandle %p", value);
 
   if(Pa_IsStreamStopped(sink_handle->stream) == 0) {
-    error = Pa_StopStream(sink_handle->stream);
+    error = Pa_AbortStream(sink_handle->stream);
     if(error != paNoError) {
-      MEMBRANE_DEBUG("Pa_StopStream: error = %d (%s)", error, Pa_GetErrorText(error));
+      MEMBRANE_DEBUG("Pa_AbortStream: error = %d (%s)", error, Pa_GetErrorText(error));
     }
   }
 
@@ -49,7 +49,7 @@ static void res_sink_handle_destructor(ErlNifEnv *env, void *value) {
 
 static int load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info) {
   int flags = ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER;
-  RES_SOURCE_HANDLE_TYPE =
+  RES_SINK_HANDLE_TYPE =
     enif_open_resource_type(env, NULL, "SinkHandle", res_sink_handle_destructor, flags, NULL);
 
   return 0;
@@ -79,7 +79,7 @@ static ERL_NIF_TERM export_write(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
   ErlNifBinary payload_binary;
 
   // Get sink_handle arg
-  if(!enif_get_resource(env, argv[0], RES_SOURCE_HANDLE_TYPE, (void **) &sink_handle)) {
+  if(!enif_get_resource(env, argv[0], RES_SINK_HANDLE_TYPE, (void **) &sink_handle)) {
     return membrane_util_make_error_args(env, "sink_handle", "Passed sink_handle is not valid resource");
   }
 
@@ -111,6 +111,31 @@ static ERL_NIF_TERM export_write(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
 }
 
 
+static ERL_NIF_TERM export_stop(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  SinkHandle *sink_handle;
+  PaError error;
+
+
+  // Get sink_handle arg
+  if(!enif_get_resource(env, argv[0], RES_SINK_HANDLE_TYPE, (void **) &sink_handle)) {
+    return membrane_util_make_error_args(env, "sink_handle", "Passed sink_handle is not valid resource");
+  }
+
+
+  // Stop the stream
+  error = Pa_AbortStream(sink_handle->stream);
+  if(error != paNoError) {
+    MEMBRANE_DEBUG("Pa_AbortStream: error = %d (%s)", error, Pa_GetErrorText(error));
+    return membrane_util_make_error_internal(env, "pa_abortstream");
+  }
+
+
+  // Return
+  return membrane_util_make_ok(env);
+}
+
+
 static ERL_NIF_TERM export_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
   int               buffer_size;
@@ -133,7 +158,7 @@ static ERL_NIF_TERM export_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
 
 
   // Initialize handle
-  sink_handle = (SinkHandle *) enif_alloc_resource(RES_SOURCE_HANDLE_TYPE, sizeof(SinkHandle));
+  sink_handle = (SinkHandle *) enif_alloc_resource(RES_SINK_HANDLE_TYPE, sizeof(SinkHandle));
   MEMBRANE_DEBUG("Creating SinkHandle %p", sink_handle);
 
 
@@ -196,7 +221,8 @@ static ERL_NIF_TERM export_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
 static ErlNifFunc nif_funcs[] =
 {
   {"create", 2, export_create},
-  {"write", 2, export_write}
+  {"write", 2, export_write},
+  {"stop", 1, export_stop},
 };
 
 

@@ -49,4 +49,25 @@ defmodule Membrane.Element.PortAudio.SinkNative do
   @spec write(any, %Membrane.Buffer{}) ::
     :ok | {:error, {:args, atom, String.t}} | {:error, {:internal, atom}}
   def write(_handle, _buffer), do: raise "NIF fail"
+
+
+  @doc """
+  Stops PortAudio sink.
+
+  Expects 1 argument:
+
+  - handle to the sink
+
+  On success, returns `:ok`.
+
+  On bad arguments passed, returns `{:error, {:args, field, description}}`.
+
+  On internal error, returns `{:error, {:internal, reason}}`.
+  """
+  @spec stop(any) ::
+    :ok | {:error, {:args, atom, String.t}} | {:error, {:internal, atom}}
+  def stop(_handle), do: raise "NIF fail"
+
+
+
 end
